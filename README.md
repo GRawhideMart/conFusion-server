@@ -1,2 +1,3 @@
-# conFusion-server
-This repo contains the source code for the Coursera NodeJS course of the Full Stack Web Development Specialization by HK University
+# DISCLAIMER
+
+This code is part of the Full Stack Web development course on Coursera, developing the NodeJS server for the ConFusion site in React. You CANNOT, under ANY circumstances whatsoever, copy this code and claim it as your own. Every attempt of plagiarism will be reported.
