@@ -4,6 +4,10 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
+var passport = require('passport');
+var authenticate = require('./authenticate');
+var config = require('./config');
+
 // 1) EXPRESS SESSIONS
 var session = require('express-session');
 var FileStore = require('session-file-store')(session);
@@ -19,7 +23,7 @@ var leaderRouter = require('./routes/leaderRouter');
 const mongoose = require('mongoose');
 const Dishes = require('./models/dishes');
 
-const url = 'mongodb://localhost:27017/conFusion';
+const url = config.mongoUrl;
 const connect = mongoose.connect(url);
 
 connect.then(db => {
@@ -38,38 +42,14 @@ app.use(express.json()); // json
 app.use(express.urlencoded({ extended: false }));
 //app.use(cookieParser());
 
-// MIDDLEWARE 2 - SESSION
-app.use(session({
-  name: 'session-id',
-  secret: '12345-67890-09876-54321',
-  saveUninitialized: false,
-  resave: false,
-  store: new FileStore()
-}));
 
-// MIDDLEWARE 3 - INDEX AND USERS ROUTER (only after the session.)
+// MIDDLEWARE 3 - PASSPORT
+app.use(passport.initialize());
+
+// MIDDLEWARE 4 - INDEX AND USERS ROUTER (only after the session.)
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
-const auth = (req, res, next) => {
-  console.log(req.session);
-  if (!req.session.user) {
-    var err = new Error('You are not authenticated');
-    err.status = 403;
-    return next(err);
-  } else {
-    if (req.session.user === 'authenticated') {
-      next();
-    } else {
-      var err = new Error('You are not authenticated');
-      err.status = 403;
-      return next(err);
-    }
-  }
-}
-
-// MIDDLEWARE 4 - AUTH (only after login or signup request, so it goes after the home page)
-app.use(auth);
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/dishes', dishRouter);
