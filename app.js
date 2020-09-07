@@ -3,6 +3,8 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+var session = require('express-session');
+var FileStore = require('session-file-store')(session);
 
 const mongoose = require('mongoose');
 
@@ -16,38 +18,63 @@ const Dishes = require('./models/dishes');
 
 var app = express();
 
+//app.use(cookieParser('12345-67890-09876-54321'));
+
+app.use(session({
+  name: 'session-id',
+  secret: '12345-67890-09876-54321',
+  saveUninitialized: false,
+  resave: false,
+  store: new FileStore()
+}));
+
+const auth = (req, res, next) => {
+  
+  console.log(req.session);
+  
+  if(!req.session.user) {
+    //console.log(req.headers);
+    var authHeader = req.headers.authorization;
+    if (!authHeader) {
+      var err = new Error('Not authenticated');
+      res.setHeader('WWW-Authenticate', 'Basic');
+      err.status = 401;
+      return next(err);
+    }
+
+    var auth = new Buffer.from(authHeader.split(' ')[1], 'base64')
+      .toString().split(':');
+
+    var user = auth[0];
+    var pass = auth[1];
+    if (user === 'admin' && pass === 'password') {
+      res.session.user = 'admin';
+      next(); //authorized
+    } else {
+      var err = new Error('You are not authenticated');
+      res.setHeader('WWW-Authenticate', 'Basic');
+      err.status = 401;
+      next(err);
+    }
+  } else {
+    if (req.session.user === 'admin') {
+      next();
+    } else {
+      var err = new Error('You are not authenticated');
+      err.status = 401;
+      next(err);
+    }
+  }
+}
+
+app.use(auth);
+
 const url = 'mongodb://localhost:27017/conFusion';
 const connect = mongoose.connect(url);
 
 connect.then(db => {
               console.log('Correctly connected to server')
         },err => console.log(err));
-
-const auth = (req,res,next) => {
-  console.log(req.headers);
-  var authHeader = req.headers.authorization;
-  if (!authHeader) {
-    var err = new Error('Not authenticated');
-    res.setHeader('WWW-Authenticate','Basic');
-    err.status = 401;
-    return next(err);
-  }
-
-  var auth = new Buffer.from(authHeader.split(' ')[1], 'base64')
-                                       .toString().split(':');
-
-  var user = auth[0];
-  var pass = auth[1];
-  if(user === 'admin' && pass === 'password') next(); //authorized
-  else {
-    var err = new Error('You are not authenticated');
-    res.setHeader('WWW-Authenticate','Basic');
-    err.status = 401;
-    next(err);
-  }
-}
-
-app.use(auth);
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
