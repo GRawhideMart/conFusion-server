@@ -7,9 +7,18 @@ var authenticate = require('../authenticate');
 var router = express.Router();
 router.use(bodyParser.json());
 
+const Users = require('../models/users');
+
 /* GET users listing. */
-router.get('/', function(req, res, next) {
-  res.send('respond with a resource');
+router.route('/')
+      .get(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+        Users.find({})
+             .then(user => {
+               res.statusCode = 200;
+               res.setHeader('Content-Type','application/json');
+               res.json(user);
+             },err => next(err))
+             .catch(err => next(err));
 });
 
 router.post('/signup', (req, res, next) => {
