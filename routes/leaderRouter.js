@@ -19,7 +19,7 @@ leaderRouter.route('/')
                       }, err => next(err))
                       .catch(err => next(err));
            })
-           .post(authenticate.verifyUser, (req,res,next) => {
+            .post(authenticate.verifyUser, authenticate.verifyAdmin, (req,res,next) => {
                Leaders.create(req.body)
                       .then(
                           leader => {
@@ -29,11 +29,11 @@ leaderRouter.route('/')
                           }, err => next(err))
                       .catch(err => next(err));
            })
-           .put(authenticate.verifyUser, (req,res,next) => {
+            .put(authenticate.verifyUser, authenticate.verifyAdmin, (req,res,next) => {
                res.statusCode = 403;
                res.end('PUT operation not permitted on endpoint /leaders');
            })
-           .delete(authenticate.verifyUser, (req,res,next) => {
+            .delete(authenticate.verifyUser, authenticate.verifyAdmin, (req,res,next) => {
                Leaders.deleteMany({})
                       .then(leader => {
                           res.statusCode = 200;
@@ -60,11 +60,11 @@ leaderRouter.route('/:leaderId')
                       })
                       .catch(err => next(err));
            })
-           .post(authenticate.verifyUser, (req,res,next) => {
+            .post(authenticate.verifyUser, authenticate.verifyAdmin, (req,res,next) => {
                res.statusCode = 403;
                res.end('POST operation not allowed on single leader.\nA friendly reminder that the id gets assigned automatically');
            })
-           .put(authenticate.verifyUser, (req,res,next) => {
+            .put(authenticate.verifyUser, authenticate.verifyAdmin, (req,res,next) => {
                Leaders.findByIdAndUpdate(req.params.leaderId, {
                    $set: req.body
                }, { new: true })
@@ -75,7 +75,7 @@ leaderRouter.route('/:leaderId')
                    }, err => next(err))
                    .catch(err => next(err));
            })
-           .delete(authenticate.verifyUser, (req,res,next) => {
+            .delete(authenticate.verifyUser, authenticate.verifyAdmin, (req,res,next) => {
                Leaders.findByIdAndDelete(req.params.leaderId)
                    .then(result => {
                        res.statusCode = 200;
